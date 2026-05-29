@@ -224,10 +224,14 @@ We maintain a preconfigured Postman collection at the root of the project: [post
 
 ---
 
-## Database Configuration
+## Environment & Database Configuration
 
-The project supports both PostgreSQL and SQLite3 databases. Configure database connection settings by specifying variables in your `.env` configuration file:
+Configure your application behavior and database connection settings by specifying variables in your `.env` configuration file:
 
+### Feature Toggles
+- **`DISABLE_AUTH`**: (Boolean, defaults to `False`). Set to `True` in development/staging environments to bypass token authentication on the `/users/me/` profile endpoint. If unauthenticated, it automatically resolves to a mock developer profile (`dev@example.com`), allowing hassle-free local endpoint testing without header configurations.
+
+### Database Settings
 **SQLite3 (Default Developer Environment):**
 ```env
 DB_ENGINE=sqlite3
