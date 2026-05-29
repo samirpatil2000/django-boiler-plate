@@ -1,7 +1,7 @@
-from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from account.models import Account
+from users.models import User
+
 
 class HealthCheckTests(APITestCase):
     def test_health_check(self):
@@ -13,10 +13,13 @@ class HealthCheckTests(APITestCase):
         self.assertIn("uptime", data)
         self.assertIn("timestamp", data)
 
-class AccountAPITests(APITestCase):
+
+class UsersAPITests(APITestCase):
     def setUp(self):
-        self.register_url = '/account/register'
-        self.login_url = '/account/login'
+        self.register_url = '/users/'
+        self.login_url = '/auth/login/'
+        self.refresh_url = '/auth/login/refresh/'
+        self.profile_url = '/users/me/'
         self.user_data = {
             "email": "testuser@example.com",
             "password": "testpassword123",
@@ -26,16 +29,15 @@ class AccountAPITests(APITestCase):
     def test_user_registration_success(self):
         response = self.client.post(self.register_url, self.user_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data.get("status"), 201)
-        self.assertEqual(response.data.get("message"), "User registered successfully")
-        self.assertEqual(response.data.get("data", {}).get("email"), "testuser@example.com")
+        self.assertEqual(response.data.get("email"), "testuser@example.com")
+        self.assertIn("date_joined", response.data)
 
     def test_user_registration_password_mismatch(self):
         data = self.user_data.copy()
         data["password2"] = "different_password"
         response = self.client.post(self.register_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data.get("status"), 400)
+        self.assertIn("password", response.data)
 
     def test_user_login_success(self):
         # Register user first
@@ -47,9 +49,8 @@ class AccountAPITests(APITestCase):
         }
         response = self.client.post(self.login_url, login_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get("status"), 200)
-        self.assertIn("access", response.data.get("data", {}))
-        self.assertIn("refresh", response.data.get("data", {}))
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
 
     def test_user_login_fail(self):
         login_data = {
@@ -57,9 +58,7 @@ class AccountAPITests(APITestCase):
             "password": "wrongpassword"
         }
         response = self.client.post(self.login_url, login_data, format='json')
-        # LoginAPIView returns status HTTP 200 but JSON payload has "status": 400
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get("status"), 400)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_get_profile_authenticated(self):
         # Register user
@@ -71,17 +70,31 @@ class AccountAPITests(APITestCase):
             "password": "testpassword123"
         }
         login_response = self.client.post(self.login_url, login_data, format='json')
-        access_token = login_response.data.get("data", {}).get("access")
+        access_token = login_response.data.get("access")
         
         # Access profile
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
-        response = self.client.get(self.register_url)
+        response = self.client.get(self.profile_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get("data", {}).get("email"), "testuser@example.com")
+        self.assertEqual(response.data.get("email"), "testuser@example.com")
 
     def test_get_profile_unauthenticated(self):
-        response = self.client.get(self.register_url)
-        # Returns 200 status code but payload contains status 403
+        response = self.client.get(self.profile_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_token_refresh(self):
+        # Register user
+        self.client.post(self.register_url, self.user_data, format='json')
+        
+        # Log in to get refresh token
+        login_data = {
+            "email": "testuser@example.com",
+            "password": "testpassword123"
+        }
+        login_response = self.client.post(self.login_url, login_data, format='json')
+        refresh_token = login_response.data.get("refresh")
+
+        # Refresh token
+        response = self.client.post(self.refresh_url, {"refresh": refresh_token}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get("status"), status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data.get("message"), "Not Authenticated!")
+        self.assertIn("access", response.data)

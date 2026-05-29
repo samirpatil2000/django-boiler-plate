@@ -18,11 +18,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from main.views import health_check
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('account/', include("account.urls")),
+    path('users/', include("users.urls")),
+    path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/login/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('health', health_check, name='health'),
 ]
 
