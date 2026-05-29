@@ -98,3 +98,13 @@ class UsersAPITests(APITestCase):
         response = self.client.post(self.refresh_url, {"refresh": refresh_token}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("access", response.data)
+
+    def test_get_profile_unauthenticated_with_disable_auth(self):
+        import os
+        from unittest import mock
+        
+        # Mock the environment variable DISABLE_AUTH to 'True'
+        with mock.patch.dict(os.environ, {"DISABLE_AUTH": "True"}):
+            response = self.client.get(self.profile_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data.get("email"), "dev@example.com")
