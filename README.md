@@ -58,16 +58,17 @@ python manage.py runserver
 ### System Health
 - `GET /health` - Check application status, UTC timestamp, and uptime (root level)
 
+### User Management
+**Base URL:** `http://127.0.0.1:8000/users/`
+
+- `POST /` - Register a new user
+- `GET /me/` - Get authenticated user profile (requires Bearer token auth)
+
 ### Authentication
-**Base URL:** `http://127.0.0.1:8000/account/`
+**Base URL:** `http://127.0.0.1:8000/auth/`
 
-- `POST /register` - Register new user
-- `POST /login` - Login and get JWT token
-- `POST /token/refresh` - Refresh JWT token (returns new access token)
-- `GET /register` - Get user profile (requires Bearer token auth)
-
-> [!NOTE]
-> The template-based views (such as `password-reset` and `password_change`) are registered in URLs but require HTML templates to be placed in `account/templates/account/` in order to render without `TemplateDoesNotExist` errors.
+- `POST /login/` - Login and get JWT token (returns access and refresh tokens)
+- `POST /login/refresh/` - Refresh JWT token (returns new access token)
 
 ## Usage Examples
 
@@ -86,7 +87,7 @@ Response:
 
 ### Register User
 ```bash
-curl -X POST http://127.0.0.1:8000/account/register \
+curl -X POST http://127.0.0.1:8000/users/ \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -97,18 +98,14 @@ curl -X POST http://127.0.0.1:8000/account/register \
 Response:
 ```json
 {
-  "status": 201,
-  "message": "User registered successfully",
-  "data": {
-    "email": "user@example.com",
-    "date_joined": "2026-05-29T18:56:17.922803Z"
-  }
+  "email": "user@example.com",
+  "date_joined": "2026-05-29T19:22:11.123456Z"
 }
 ```
 
 ### Login
 ```bash
-curl -X POST http://127.0.0.1:8000/account/login \
+curl -X POST http://127.0.0.1:8000/auth/login/ \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -118,34 +115,26 @@ curl -X POST http://127.0.0.1:8000/account/login \
 Response:
 ```json
 {
-  "status": 200,
-  "message": "successfully login",
-  "data": {
-    "refresh": "YOUR_REFRESH_TOKEN",
-    "access": "YOUR_ACCESS_TOKEN"
-  }
+  "refresh": "YOUR_REFRESH_TOKEN",
+  "access": "YOUR_ACCESS_TOKEN"
 }
 ```
 
 ### Access Protected Profile Endpoint
 ```bash
-curl -X GET http://127.0.0.1:8000/account/register \
+curl -X GET http://127.0.0.1:8000/users/me/ \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 Response:
 ```json
 {
-  "status": 200,
-  "message": "successfully register",
-  "data": {
-    "email": "user@example.com"
-  }
+  "email": "user@example.com"
 }
 ```
 
 ### Refresh JWT Token
 ```bash
-curl -X POST http://127.0.0.1:8000/account/token/refresh \
+curl -X POST http://127.0.0.1:8000/auth/login/refresh/ \
   -H "Content-Type: application/json" \
   -d '{
     "refresh": "YOUR_REFRESH_TOKEN"

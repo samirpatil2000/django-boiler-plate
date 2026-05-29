@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # local apps
-    'account',
+    'users',
 
     # third party apps
     'rest_framework',
@@ -113,7 +113,7 @@ else:
         }
     }
 
-AUTH_USER_MODEL = 'account.Account'
+AUTH_USER_MODEL = 'users.User'
 
 
 
