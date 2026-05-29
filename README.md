@@ -55,9 +55,12 @@ python manage.py runserver
 
 ## API Endpoints
 
-**Base URL:** `http://127.0.0.1:8000/account/`
+### System Health
+- `GET /health` - Check application status, UTC timestamp, and uptime (root level)
 
 ### Authentication
+**Base URL:** `http://127.0.0.1:8000/account/`
+
 - `POST /register` - Register new user
 - `POST /login` - Login and get JWT token
 - `POST /token/refresh` - Refresh JWT token (returns new access token)
@@ -67,6 +70,19 @@ python manage.py runserver
 > The template-based views (such as `password-reset` and `password_change`) are registered in URLs but require HTML templates to be placed in `account/templates/account/` in order to render without `TemplateDoesNotExist` errors.
 
 ## Usage Examples
+
+### System Health Check
+```bash
+curl -X GET http://127.0.0.1:8000/health
+```
+Response:
+```json
+{
+  "status": "UP",
+  "timestamp": "2026-05-29T19:00:54.050566+00:00",
+  "uptime": "0h 0m 11s"
+}
+```
 
 ### Register User
 ```bash
