@@ -231,6 +231,10 @@ Configure your application behavior and database connection settings by specifyi
 ### Feature Toggles
 - **`DISABLE_AUTH`**: (Boolean, defaults to `False`). Set to `True` in development/staging environments to bypass token authentication on the `/users/me/` profile endpoint. If unauthenticated, it automatically resolves to a mock developer profile (`dev@example.com`), allowing hassle-free local endpoint testing without header configurations.
 
+### JWT Expiry Settings
+- **`JWT_ACCESS_TOKEN_LIFETIME_MINUTES`**: (Integer, defaults to `8700` / 6 days + 1 hour). The duration in minutes for which a generated JWT access token is valid.
+- **`JWT_REFRESH_TOKEN_LIFETIME_DAYS`**: (Integer, defaults to `7`). The duration in days for which a generated JWT refresh token is valid.
+
 ### Database Settings
 **SQLite3 (Default Developer Environment):**
 ```env

@@ -125,20 +125,9 @@ REST_FRAMEWORK = {
 
 
 
-JWT_AUTH = {
-    # how long the original token is valid for
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=2),
-
-    # allow refreshing of tokens
-    'JWT_ALLOW_REFRESH': False,
-
-    # this is the maximum time AFTER the token was issued that
-    # it can be refreshed.  exprired tokens can't be refreshed.
-    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),
-}
-
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=6, hours=1),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', 8700))),
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', 7))),
 }
 
 
