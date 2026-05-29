@@ -43,6 +43,11 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies and setup
 pip install -r requirements.txt
+
+# Generate custom user migrations (required before migrating)
+python manage.py makemigrations
+
+# Apply migrations and start server
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
@@ -55,13 +60,11 @@ python manage.py runserver
 ### Authentication
 - `POST /register` - Register new user
 - `POST /login` - Login and get JWT token
-- `POST /token/refresh` - Refresh JWT token
-- `GET /register` - Get user profile (requires auth)
+- `POST /token/refresh` - Refresh JWT token (returns new access token)
+- `GET /register` - Get user profile (requires Bearer token auth)
 
-### Password Management
-- `GET /password-reset` - Request password reset
-- `GET /password-reset-confirm/<uidb64>/<token>` - Confirm reset
-- `GET /password_change` - Change password form
+> [!NOTE]
+> The template-based views (such as `password-reset` and `password_change`) are registered in URLs but require HTML templates to be placed in `account/templates/account/` in order to render without `TemplateDoesNotExist` errors.
 
 ## Usage Examples
 
@@ -75,6 +78,17 @@ curl -X POST http://127.0.0.1:8000/account/register \
     "password2": "securepass123"
   }'
 ```
+Response:
+```json
+{
+  "status": 201,
+  "message": "User registered successfully",
+  "data": {
+    "email": "user@example.com",
+    "date_joined": "2026-05-29T18:56:17.922803Z"
+  }
+}
+```
 
 ### Login
 ```bash
@@ -85,11 +99,47 @@ curl -X POST http://127.0.0.1:8000/account/login \
     "password": "securepass123"
   }'
 ```
+Response:
+```json
+{
+  "status": 200,
+  "message": "successfully login",
+  "data": {
+    "refresh": "YOUR_REFRESH_TOKEN",
+    "access": "YOUR_ACCESS_TOKEN"
+  }
+}
+```
 
-### Access Protected Endpoint
+### Access Protected Profile Endpoint
 ```bash
 curl -X GET http://127.0.0.1:8000/account/register \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+Response:
+```json
+{
+  "status": 200,
+  "message": "successfully register",
+  "data": {
+    "email": "user@example.com"
+  }
+}
+```
+
+### Refresh JWT Token
+```bash
+curl -X POST http://127.0.0.1:8000/account/token/refresh \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh": "YOUR_REFRESH_TOKEN"
+  }'
+```
+Response:
+```json
+{
+  "access": "YOUR_NEW_ACCESS_TOKEN"
+}
 ```
 
 ## Project Structure
