@@ -177,11 +177,15 @@ DB_PORT=5432
 
 ```bash
 # Run tests
-python manage.py test
+python manage.py test users
 
 # Access admin panel
 http://127.0.0.1:8000/admin/
 ```
+
+### Testing with Postman
+A Postman collection is maintained at the root of this project: [postman_collection.json](file:///Users/samirpatil/Desktop/Dev/django-boiler-plate/postman_collection.json). 
+Import this file into Postman to easily test all endpoints using the preconfigured request templates. It includes variables for `base_url`, `access_token`, and `refresh_token`.
 
 ## Deployment
 
