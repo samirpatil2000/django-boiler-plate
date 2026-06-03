@@ -1,0 +1,28 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: ${LOKI_PUSH_URL}
+    basic_auth:
+      username: ${PROMTAIL_BASIC_AUTH_USERNAME}
+      password: ${PROMTAIL_BASIC_AUTH_PASSWORD}
+
+scrape_configs:
+  - job_name: application-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: app-logs
+          # Scrapes logs.log and any django.log generated in the application folder
+          __path__: /var/log/app/*.log
+
+    # Drop compressed log backups (.gz)
+    relabel_configs:
+      - source_labels: [__path__]
+        regex: '.*\.gz'
+        action: drop
