@@ -108,3 +108,26 @@ class UsersAPITests(APITestCase):
             response = self.client.get(self.profile_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertEqual(response.data.get("email"), "dev@example.com")
+
+
+class LoggingMiddlewareTests(APITestCase):
+    def test_trace_id_generation(self):
+        # A request without X-Trace-ID header should get a generated trace ID in response
+        response = self.client.get('/health')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('X-Trace-ID', response)
+        # Ensure it's a valid UUID
+        trace_id = response['X-Trace-ID']
+        import uuid
+        try:
+            uuid.UUID(trace_id)
+        except ValueError:
+            self.fail(f"Trace ID {trace_id} is not a valid UUID")
+
+    def test_trace_id_propagation(self):
+        # A request with X-Trace-ID header should propagate the same trace ID back in response
+        custom_trace_id = "test-trace-id-12345"
+        response = self.client.get('/health', HTTP_X_TRACE_ID=custom_trace_id)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.get('X-Trace-ID'), custom_trace_id)
+

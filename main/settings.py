@@ -63,6 +63,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Custom Context-Aware Logging Middleware
+    'main.middleware.DjangoLoggingMiddleware',
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -179,3 +181,58 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'collectstatic')
 # STATICFILES_DIRS = [
 #     os.path.join(BASE_DIR, 'static')
 # ]
+
+# Context-Aware Logging & Log Rotation Configuration
+CONCISE_LOGGING = os.environ.get("CONCISE_LOGGING", "false").lower() == "true"
+
+LOGS_DIR = BASE_DIR / "logs"
+if not LOGS_DIR.exists():
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    
+    # 1. Custom Filters
+    "filters": {
+        "request_context": {
+            "()": "main.log_formatters.RequestContextFilter",
+        },
+    },
+    
+    # 2. Custom Formatters
+    "formatters": {
+        "json": {
+            "()": "main.log_formatters.JSONFormatter",
+        },
+        "concise": {
+            "format": "%(asctime)s | %(levelname)s | %(message)s | %(method)s %(path)s | trace=%(traceId)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+    
+    # 3. Log Handlers
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "filters": ["request_context"],
+            "formatter": "concise" if CONCISE_LOGGING else "json",
+        },
+        "file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOGS_DIR / "django.log"),
+            "maxBytes": 20 * 1024 * 1024,  # 20 MB
+            "backupCount": 3,
+            "filters": ["request_context"],
+            "formatter": "json",
+        },
+    },
+    
+    # 4. Root Logger Configuration
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+}
