@@ -253,6 +253,99 @@ DB_PORT=5432
 
 ---
 
+## Logging & Metrics Configuration (PLG Stack)
+
+We utilize a Loki, Promtail, Grafana, and Prometheus (PLG) stack to collect, parse, and visualize application logs and system metrics. All configurations for these services are located under the `logs-services/` directory.
+
+### Port Mappings
+- **Grafana**: `http://localhost:4000` (Visualization dashboard, mapped from internal port `3000`)
+- **Loki**: `http://localhost:3100` (Log storage backend)
+- **Promtail**: `http://localhost:9080` (Log scraping & shipping agent)
+- **Prometheus**: `http://localhost:9095` (Performance metrics collector, mapped from internal port `9090`)
+
+### Directory Structure
+```text
+django-boiler-plate/
+└── logs-services/
+    ├── docker-compose-logs.yml     # Orchestration for Loki and Prometheus
+    ├── docker-compose-promtail.yml # Orchestration for Promtail (log shipper)
+    ├── docker-compose-grafana.yml # Orchestration for Grafana (dashboard UI)
+    ├── loki-config.yml             # Loki server storage and retention configuration
+    ├── promtail-config.yml         # Promtail scrapers and log processing pipeline
+    ├── prometheus.yml              # Prometheus metrics scraping intervals and targets
+    └── .env.example                # Configuration parameters template
+```
+
+### Running the Logging Services
+
+1. **Create the Shared Docker Network**:
+   All services and the main application container run on a shared network to allow internal resolution.
+   ```bash
+   docker network create log-network
+   ```
+
+2. **Configure Logging Environment Variables**:
+   Create a `.env` file under the `logs-services/` directory:
+   ```bash
+   cp logs-services/.env.example logs-services/.env
+   ```
+
+3. **Start the Logging Stack**:
+   You can start Loki, Promtail, Grafana, and Prometheus with the following command:
+   ```bash
+   docker compose -f logs-services/docker-compose-logs.yml \
+                  -f logs-services/docker-compose-promtail.yml \
+                  -f logs-services/docker-compose-grafana.yml \
+                  up -d
+   ```
+
+4. **Launch the Application**:
+   Ensure you have your root `.env` configuration file set up, then start the main application:
+   ```bash
+   docker compose up -d --build
+   ```
+   The application container automatically mounts `./logs:/app/logs` so that its structured logs are exposed to the host filesystem, allowing Promtail to ingest them.
+
+5. **Stop the Logging Services**:
+   To stop the logging stack containers:
+   ```bash
+   docker compose -f logs-services/docker-compose-logs.yml \
+                  -f logs-services/docker-compose-promtail.yml \
+                  -f logs-services/docker-compose-grafana.yml \
+                  down
+   ```
+
+### Log Rotation Integration
+
+To prevent logs from filling up the disk, log rotation is pre-configured at the application level.
+
+1. **Django Configuration**:
+   The boilerplate implements file rotation using Python's native `RotatingFileHandler` configured inside `main/settings.py`:
+   ```python
+   "handlers": {
+       "file": {
+           "level": "INFO",
+           "class": "logging.handlers.RotatingFileHandler",
+           "filename": str(LOGS_DIR / "django.log"),
+           "maxBytes": 20 * 1024 * 1024,  # Roll over at 20 MB
+           "backupCount": 3,              # Keep last 3 rotated files
+           "formatter": "json",
+       }
+   }
+   ```
+
+2. **Promtail Compatibility**:
+   - **Ignoring Backup Files**: When logs roll over, the backups are renamed to `django.log.1`, `django.log.2`, etc. Since Promtail is configured to match `__path__: /var/log/app/*.log`, these backup files do not match the suffix and are ignored, preventing log duplication in Loki.
+   - **Dropping Compressed Logs**: If backups are compressed, the Promtail configuration includes a relabeling stage to automatically drop `.gz` files:
+     ```yaml
+     relabel_configs:
+       - source_labels: [__path__]
+         regex: '.*\.gz'
+         action: drop
+     ```
+
+---
+
 ## Contributing
 
 We welcome contributions to make this boilerplate even better!

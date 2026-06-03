@@ -7,6 +7,8 @@ services:
     image: backend
     ports:
       - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
     environment:
       - DEBUG=${DEBUG}
       - SECRET_KEY=${SECRET_KEY}
@@ -16,3 +18,9 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
+    networks:
+      - log-network
+
+networks:
+  log-network:
+    external: true

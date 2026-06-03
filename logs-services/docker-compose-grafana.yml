@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "4000:3000"
+    env_file:
+      - .env
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+      - log-network
+
+volumes:
+  grafana-storage:
+
+networks:
+  log-network:
+    external: true
