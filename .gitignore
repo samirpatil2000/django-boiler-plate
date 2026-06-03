@@ -1,6 +1,7 @@
 collectstatic
 .env
 /db.sqlite3
+.DS_Store
 **/migrations/**
 !**/migrations/__init__.py
 **/__pycache__/
