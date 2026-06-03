@@ -253,26 +253,24 @@ DB_PORT=5432
 
 ---
 
-## Logging & Metrics Configuration (PLG Stack)
+## Logging Configuration (LG Stack)
 
-We utilize a Loki, Promtail, Grafana, and Prometheus (PLG) stack to collect, parse, and visualize application logs and system metrics. All configurations for these services are located under the `logs-services/` directory.
+We utilize a Loki, Promtail, and Grafana (LG) stack to collect, parse, and visualize application logs. All configurations for these services are located under the `logs-services/` directory.
 
 ### Port Mappings
 - **Grafana**: `http://localhost:4000` (Visualization dashboard, mapped from internal port `3000`)
 - **Loki**: `http://localhost:3100` (Log storage backend)
 - **Promtail**: `http://localhost:9080` (Log scraping & shipping agent)
-- **Prometheus**: `http://localhost:9095` (Performance metrics collector, mapped from internal port `9090`)
 
 ### Directory Structure
 ```text
 django-boiler-plate/
 └── logs-services/
-    ├── docker-compose-logs.yml     # Orchestration for Loki and Prometheus
+    ├── docker-compose-logs.yml     # Orchestration for Loki
     ├── docker-compose-promtail.yml # Orchestration for Promtail (log shipper)
     ├── docker-compose-grafana.yml # Orchestration for Grafana (dashboard UI)
     ├── loki-config.yml             # Loki server storage and retention configuration
     ├── promtail-config.yml         # Promtail scrapers and log processing pipeline
-    ├── prometheus.yml              # Prometheus metrics scraping intervals and targets
     └── .env.example                # Configuration parameters template
 ```
 
@@ -291,7 +289,7 @@ django-boiler-plate/
    ```
 
 3. **Start the Logging Stack**:
-   You can start Loki, Promtail, Grafana, and Prometheus with the following command:
+   You can start Loki, Promtail, and Grafana with the following command:
    ```bash
    docker compose -f logs-services/docker-compose-logs.yml \
                   -f logs-services/docker-compose-promtail.yml \
